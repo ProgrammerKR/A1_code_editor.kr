@@ -1,0 +1,291 @@
+<!--Created by Kanishk Raj-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Code Editor</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/theme/material-darker.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/theme/monokai.min.css">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+<style>
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: #f0f0f0;
+}
+
+.container {
+  display: flex;
+  width: 100%;
+  max-width: 1200px;
+  height: 80vh;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.editor {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: #fff;
+}
+
+.settings {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  border-bottom: 1px solid #ccc;
+}
+
+.settings label {
+  margin-right: 5px;
+}
+
+.settings button {
+  margin-left: 10px;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.CodeMirror {
+  flex: 1;
+  font-size: 16px;
+  height: 100px;
+}
+
+.code-section {
+  flex: 1;
+  display: none;
+  flex-direction: column;
+}
+
+.code-section.visible {
+  display: flex;
+}
+
+.code-section h3 {
+  margin: 10px;
+}
+
+.preview-container {
+  flex: 1;
+  border-left: 1px solid #ccc;
+}
+
+iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+</style>
+</head>
+<body>
+  <div class="container">
+    <div class="editor">
+      <div class="settings">
+        <label for="theme">Theme:</label>
+        <select id="theme">
+          <option value="default">Default</option>
+          <option value="material-darker">SubLime (Dark)</option>
+          <option value="monokai">VS Code (Dark)</option>
+        </select>
+        <label for="language">Language:</label>
+        <select id="language">
+          <option value="htmlmixed">HTML</option>
+          <option value="javascript">JavaScript</option>
+          <option value="css">CSS</option>
+          <option value="python">Python</option>
+          <option value="java">Java</option>
+          <option value="php">PHP</option>
+          <option value="ruby">Ruby</option>
+          <option value="c">C</option>
+          <option value="cpp">C++</option>
+          <option value="csharp">C#</option>
+          <option value="go">Go</option>
+          <option value="swift">Swift</option>
+          <option value="r">R</option>
+          <option value="perl">Perl</option>
+          <option value="sql">SQL</option>
+          <option value="html_css_js">HTML, CSS, JavaScript</option>
+        </select>
+        <label for="fontSize">Font Size:</label>
+        <input type="range" id="fontSize" min="12" max="24" value="16">
+        <button id="run-button">Run</button>
+        <button id="save-button">Save</button>
+      </div>
+      <div class="code-section" id="html-section">
+        <h3>HTML</h3>
+        <textarea id="html-code" spellcheck="false"></textarea>
+      </div>
+      <div class="code-section" id="css-section">
+        <h3>CSS</h3>
+        <textarea id="css-code" spellcheck="false"></textarea>
+      </div>
+      <div class="code-section" id="js-section">
+        <h3>JavaScript</h3>
+        <textarea id="js-code" spellcheck="false"></textarea>
+      </div>
+      <div class="code-section" id="code-section">
+        <h3>Editor</h3>
+        <textarea id="code" spellcheck="false"></textarea>
+      </div>
+    </div>
+    <div class="preview-container">
+      <iframe id="preview"></iframe>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/xml/xml.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/javascript/javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/css/css.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/htmlmixed/htmlmixed.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/python/python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/clike/clike.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/php/php.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/ruby/ruby.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/go/go.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/swift/swift.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/sql/sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/r/r.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/perl/perl.min.js"></script>
+  <script>
+      const htmlTextarea = document.getElementById('html-code');
+      const cssTextarea = document.getElementById('css-code');
+      const jsTextarea = document.getElementById('js-code');
+      const codeTextarea = document.getElementById('code');
+      const previewFrame = document.getElementById('preview');
+      const themeSelect = document.getElementById('theme');
+      const languageSelect = document.getElementById('language');
+      const fontSizeRange = document.getElementById('fontSize');
+      const runButton = document.getElementById('run-button');
+      const saveButton = document.getElementById('save-button');
+
+      let htmlEditor = CodeMirror.fromTextArea(htmlTextarea, {
+        mode: "htmlmixed",
+        lineNumbers: true,
+        theme: "default"
+      });
+
+      let cssEditor = CodeMirror.fromTextArea(cssTextarea, {
+        mode: "css",
+        lineNumbers: true,
+        theme: "default"
+      });
+
+      let jsEditor = CodeMirror.fromTextArea(jsTextarea, {
+        mode: "javascript",
+        lineNumbers: true,
+        theme: "default"
+      });
+
+      let codeEditor = CodeMirror.fromTextArea(codeTextarea, {
+        mode: "htmlmixed",
+        lineNumbers: true,
+        theme: "default"
+      });
+
+      function updatePreview() {
+        const htmlCode = htmlEditor.getValue();
+        const cssCode = `<style>${cssEditor.getValue()}</style>`;
+        const jsCode = `<script>${jsEditor.getValue()}<\/script>`;
+        const combinedCode = htmlCode + cssCode + jsCode;
+
+        const doc = previewFrame.contentDocument || previewFrame.contentWindow.document;
+        doc.open();
+        doc.write(combinedCode);
+        doc.close();
+      }
+
+      themeSelect.addEventListener('change', function() {
+        const theme = themeSelect.value;
+        htmlEditor.setOption('theme', theme);
+        cssEditor.setOption('theme', theme);
+        jsEditor.setOption('theme', theme);
+        codeEditor.setOption('theme', theme);
+      });
+
+      languageSelect.addEventListener('change', function() {
+        const mode = languageSelect.value;
+
+        document.getElementById('html-section').classList.remove('visible');
+        document.getElementById('css-section').classList.remove('visible');
+        document.getElementById('js-section').classList.remove('visible');
+        document.getElementById('code-section').classList.remove('visible');
+
+        if (mode === 'html_css_js') {
+          document.getElementById('html-section').classList.add('visible');
+          document.getElementById('css-section').classList.add('visible');
+          document.getElementById('js-section').classList.add('visible');
+        } else {
+          document.getElementById('code-section').classList.add('visible');
+          codeEditor.setOption('mode', mode);
+        }
+      });
+
+      fontSizeRange.addEventListener('input', function() {
+        const size = fontSizeRange.value + 'px';
+        document.querySelectorAll('.CodeMirror').forEach(cm => {
+          cm.style.fontSize = size;
+        });
+        htmlEditor.refresh();
+        cssEditor.refresh();
+        jsEditor.refresh();
+        codeEditor.refresh();
+      });
+
+      runButton.addEventListener('click', updatePreview);
+
+      saveButton.addEventListener('click', function() {
+        const zip = new JSZip();
+        zip.file("html.html", htmlEditor.getValue());
+        zip.file("styles.css", cssEditor.getValue());
+        zip.file("script.js", jsEditor.getValue());
+
+        zip.generateAsync({type:"blob"}).then(function(content) {
+          const link = document.createElement("a");
+          link.href = URL.createObjectURL(content);
+          link.download = "code.zip";
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        });
+      });
+
+      // Initialize editor with default content
+      htmlEditor.setValue(`<!DOCTYPE html>
+      <html>
+      <head>
+        <title>Live Preview</title>
+      </head>
+      <body>
+        <h1>Hello, world!</h1>
+        <p>Edit the code to see live changes.</p>
+      </body>
+      </html>`);
+
+      cssEditor.setValue(`body {
+        font-family: Arial, sans-serif;
+      }
+      h1 {
+        color: blue;
+      }`);
+
+      jsEditor.setValue(`console.log('Hello, world!');`);
+
+      updatePreview();
+  </script>
+</body>
+</html>
